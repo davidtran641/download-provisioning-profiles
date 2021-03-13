@@ -3,6 +3,7 @@ import * as io from '@actions/io'
 import * as fs from 'fs'
 import * as path from 'path'
 import * as provisioning from './provisioning'
+import {ProfileAttributes} from 'appstoreconnect/dist/v1/routes/provisioning/profiles/types'
 
 async function run(): Promise<void> {
   try {
@@ -31,7 +32,11 @@ async function run(): Promise<void> {
         )
       }
 
-      const profileFilename = `${profile.attributes.uuid}.mobileprovision`
+      const ext = isMacProfile(profile.attributes)
+        ? 'provisionprofile'
+        : 'mobileprovision'
+      core.info(`${profile.attributes.profileType}, ext: ${ext}`)
+      const profileFilename = `${profile.attributes.uuid}.${ext}`
       const basePath = path.join(
         process.env['HOME'],
         '/Library/MobileDevice/Provisioning Profiles'
@@ -55,6 +60,14 @@ async function run(): Promise<void> {
   } catch (error) {
     core.setFailed(error.message)
   }
+}
+
+function isMacProfile(attributes: ProfileAttributes): boolean {
+  return (
+    attributes.profileType === 'MAC_APP_DEVELOPMENT' ||
+    attributes.profileType === 'MAC_APP_STORE' ||
+    attributes.profileType === 'MAC_APP_DIRECT'
+  )
 }
 
 run()
